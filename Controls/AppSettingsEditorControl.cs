@@ -1,6 +1,7 @@
 using AppSettingsEditor.Models;
 using AppSettingsEditor.Services;
 using System.ComponentModel;
+using System.Drawing;
 using System.Reflection;
 using System.Windows.Forms;
 
@@ -48,25 +49,62 @@ public partial class AppSettingsEditorControl : UserControl
     private void InitializeUI()
     {
         this.Dock = DockStyle.Fill;
+        this.BackColor = Color.White;
+
+        // Define blue theme colors
+        var lightBlue = Color.FromArgb(173, 216, 230); // Light blue matching main app
+        var mediumBlue = Color.FromArgb(100, 149, 237); // Medium blue for accents
+        var darkBlue = Color.FromArgb(70, 130, 180); // Darker blue for text
 
         // ToolStrip
-        _toolStrip = new ToolStrip();
-        _toolStrip.Items.Add(new ToolStripButton("Save", null, (s, e) => SaveConfiguration()) { Enabled = false });
-        _toolStrip.Items.Add(new ToolStripButton("Discard", null, (s, e) => DiscardChanges()) { Enabled = false });
+        _toolStrip = new ToolStrip
+        {
+            BackColor = lightBlue,
+            ForeColor = Color.White
+        };
+        _toolStrip.Items.Add(new ToolStripButton("Save", null, (s, e) => SaveConfiguration()) { Enabled = false, ForeColor = Color.White });
+        _toolStrip.Items.Add(new ToolStripButton("Discard", null, (s, e) => DiscardChanges()) { Enabled = false, ForeColor = Color.White });
         _toolStrip.Items.Add(new ToolStripSeparator());
-        _toolStrip.Items.Add(new ToolStripButton("Reload", null, (s, e) => LoadConfiguration()));
-        _toolStrip.Items.Add(new ToolStripButton("Restore Backup...", null, (s, e) => RestoreBackup()));
+        _toolStrip.Items.Add(new ToolStripButton("Reload", null, (s, e) => LoadConfiguration()) { ForeColor = Color.White });
+        _toolStrip.Items.Add(new ToolStripButton("Restore Backup...", null, (s, e) => RestoreBackup()) { ForeColor = Color.White });
         _toolStrip.Items.Add(new ToolStripSeparator());
-        _toolStrip.Items.Add(new ToolStripButton("Apply Master...", null, (s, e) => ApplyMaster()));
-        _toolStrip.Items.Add(new ToolStripButton("Save Template...", null, (s, e) => SaveTemplate()));
-        _toolStrip.Items.Add(new ToolStripButton("Load Template...", null, (s, e) => LoadTemplate()));
+        _toolStrip.Items.Add(new ToolStripButton("Apply Master...", null, (s, e) => ApplyMaster()) { ForeColor = Color.White });
+        _toolStrip.Items.Add(new ToolStripButton("Save Template...", null, (s, e) => SaveTemplate()) { ForeColor = Color.White });
+        _toolStrip.Items.Add(new ToolStripButton("Load Template...", null, (s, e) => LoadTemplate()) { ForeColor = Color.White });
 
-        // TabControl
-        _tabControl = new TabControl { Dock = DockStyle.Fill };
+        // TabControl with blue theme
+        _tabControl = new TabControl 
+        { 
+            Dock = DockStyle.Fill,
+            BackColor = Color.White,
+            ForeColor = darkBlue
+        };
+        _tabControl.DrawMode = TabDrawMode.OwnerDrawFixed;
+        _tabControl.DrawItem += (s, e) =>
+        {
+            var tab = _tabControl.TabPages[e.Index];
+            var rect = _tabControl.GetTabRect(e.Index);
+            var font = e.Font ?? SystemFonts.DefaultFont;
+            
+            if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
+            {
+                e.Graphics.FillRectangle(new SolidBrush(lightBlue), rect);
+                e.Graphics.DrawString(tab.Text, font, new SolidBrush(Color.White), rect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+            }
+            else
+            {
+                e.Graphics.FillRectangle(new SolidBrush(Color.White), rect);
+                e.Graphics.DrawString(tab.Text, font, new SolidBrush(darkBlue), rect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+            }
+        };
 
         // StatusStrip
-        _statusStrip = new StatusStrip();
-        _statusLabel = new ToolStripStatusLabel("Ready");
+        _statusStrip = new StatusStrip
+        {
+            BackColor = lightBlue,
+            ForeColor = Color.White
+        };
+        _statusLabel = new ToolStripStatusLabel("Ready") { ForeColor = Color.White };
         _statusStrip.Items.Add(_statusLabel);
 
         // Layout
@@ -162,20 +200,30 @@ public partial class AppSettingsEditorControl : UserControl
 
     private void CreateTab(string sectionName, object sectionModel)
     {
-        var tabPage = new TabPage(sectionName);
-        var scrollPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+        var tabPage = new TabPage(sectionName)
+        {
+            BackColor = Color.White
+        };
+        var scrollPanel = new Panel 
+        { 
+            Dock = DockStyle.Fill, 
+            AutoScroll = true,
+            BackColor = Color.White
+        };
         var tableLayout = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
             AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 4,
-            Padding = new Padding(10)
+            Padding = new Padding(10),
+            BackColor = Color.White,
+            Location = new Point(0, 0)
         };
 
         tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200)); // Property name
-        tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); // Control
+        tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30)); // Control
         tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30)); // Status icon
-        tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); // Help text
+        tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70)); // Help text
 
         var properties = sectionModel.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
         int row = 0;
@@ -193,7 +241,9 @@ public partial class AppSettingsEditorControl : UserControl
             {
                 Text = prop.Name,
                 Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleLeft
+                TextAlign = ContentAlignment.MiddleLeft,
+                ForeColor = Color.FromArgb(70, 130, 180), // Dark blue
+                Font = new Font(Font.FontFamily, Font.Size, FontStyle.Bold)
             };
             tableLayout.Controls.Add(nameLabel, 0, row);
 
@@ -207,7 +257,7 @@ public partial class AppSettingsEditorControl : UserControl
                 Text = "○",
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleCenter,
-                ForeColor = Color.Gray
+                ForeColor = Color.FromArgb(173, 216, 230) // Light blue
             };
             _statusLabels[propName] = statusLabel;
             tableLayout.Controls.Add(statusLabel, 2, row);
@@ -218,8 +268,9 @@ public partial class AppSettingsEditorControl : UserControl
                 Text = description,
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = Color.DarkGray,
-                Font = new Font(Font.FontFamily, Font.Size * 0.9f)
+                ForeColor = Color.FromArgb(100, 100, 100), // Dark gray for readability
+                Font = new Font(Font.FontFamily, Font.Size * 0.95f),
+                AutoSize = false
             };
             tableLayout.Controls.Add(helpLabel, 3, row);
 
@@ -230,6 +281,19 @@ public partial class AppSettingsEditorControl : UserControl
             row++;
         }
 
+        // Set table layout width to match scroll panel (will be adjusted on resize)
+        tableLayout.Width = scrollPanel.ClientSize.Width;
+        tableLayout.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        
+        // Handle scroll panel resize to adjust table layout width
+        scrollPanel.Resize += (s, e) =>
+        {
+            if (tableLayout != null)
+            {
+                tableLayout.Width = Math.Max(scrollPanel.ClientSize.Width - SystemInformation.VerticalScrollBarWidth, 0);
+            }
+        };
+        
         scrollPanel.Controls.Add(tableLayout);
         tabPage.Controls.Add(scrollPanel);
         _tabControl.TabPages.Add(tabPage);
@@ -246,7 +310,8 @@ public partial class AppSettingsEditorControl : UserControl
             var checkbox = new CheckBox
             {
                 Checked = currentValue as bool? ?? false,
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
+                ForeColor = Color.FromArgb(70, 130, 180) // Dark blue
             };
             checkbox.CheckedChanged += (s, e) => OnFieldChanged(propName, checkbox.Checked);
             control = checkbox;
@@ -276,7 +341,8 @@ public partial class AppSettingsEditorControl : UserControl
             {
                 Dock = DockStyle.Fill,
                 Minimum = minValue,
-                Maximum = maxValue
+                Maximum = maxValue,
+                ForeColor = Color.FromArgb(70, 130, 180) // Dark blue
             };
             
             // Now set the Value after Minimum and Maximum are set
@@ -306,7 +372,8 @@ public partial class AppSettingsEditorControl : UserControl
                     var comboBox = new ComboBox
                     {
                         Dock = DockStyle.Fill,
-                        DropDownStyle = ComboBoxStyle.DropDownList
+                        DropDownStyle = ComboBoxStyle.DropDownList,
+                        ForeColor = Color.FromArgb(70, 130, 180) // Dark blue
                     };
                     var allowedValues = allowedMatch.Groups[1].Value
                         .Split(',')
@@ -322,7 +389,8 @@ public partial class AppSettingsEditorControl : UserControl
                     var textBox = new TextBox
                     {
                         Text = currentValue as string ?? "",
-                        Dock = DockStyle.Fill
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.FromArgb(70, 130, 180) // Dark blue
                     };
                     textBox.TextChanged += (s, e) => OnFieldChanged(propName, textBox.Text);
                     control = textBox;
@@ -333,7 +401,8 @@ public partial class AppSettingsEditorControl : UserControl
                 var textBox = new TextBox
                 {
                     Text = currentValue as string ?? "",
-                    Dock = DockStyle.Fill
+                    Dock = DockStyle.Fill,
+                    ForeColor = Color.FromArgb(70, 130, 180) // Dark blue
                 };
                 textBox.TextChanged += (s, e) => OnFieldChanged(propName, textBox.Text);
                 control = textBox;
@@ -426,17 +495,17 @@ public partial class AppSettingsEditorControl : UserControl
         if (!changed)
         {
             statusLabel.Text = "○";
-            statusLabel.ForeColor = Color.Gray;
+            statusLabel.ForeColor = Color.FromArgb(173, 216, 230); // Light blue
         }
         else if (valid)
         {
             statusLabel.Text = "✓";
-            statusLabel.ForeColor = Color.Green;
+            statusLabel.ForeColor = Color.FromArgb(34, 139, 34); // Forest green
         }
         else
         {
             statusLabel.Text = "✗";
-            statusLabel.ForeColor = Color.Red;
+            statusLabel.ForeColor = Color.FromArgb(220, 20, 60); // Crimson red
         }
     }
 
